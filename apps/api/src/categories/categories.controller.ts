@@ -1,8 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { Category, TransactionType } from '@prisma/client';
+import { Category } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { QueryCategoriesDto } from './dto/query-categories.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Controller('categories')
@@ -17,9 +18,9 @@ export class CategoriesController {
   @Get()
   findAll(
     @CurrentUser('id') userId: string,
-    @Query('type') type?: TransactionType,
+    @Query() query: QueryCategoriesDto,
   ): Promise<Category[]> {
-    return this.categoriesService.findAll(userId, { type });
+    return this.categoriesService.findAll(userId, query);
   }
 
   @Get(':id')

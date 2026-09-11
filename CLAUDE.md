@@ -107,6 +107,14 @@ pnpm --filter @expense-tracker/api test -- -t "имя теста"               
 `findFirst({ where: { id, userId } })` и на чужую запись отвечает 404 (не 403 — чтобы не
 подтверждать её существование); `update`/`remove` наследуют эту проверку, так как зовут `findOne`.
 
+Ссылки на другие записи проверяются тем же способом. В `CategoriesService.assertParentUsable`
+`parentId` прогоняется через собственный `findOne`, поэтому чужая категория в роли родителя даёт
+404; дополнительно запрещены родитель-сам-себе и родитель из собственного поддерева
+(подъём по цепочке `parentId`, глубина ограничена `MAX_PARENT_DEPTH`) — оба случая 400.
+
+Нарушение `@@unique([userId, name, type])` в категориях переводится в 409 (`toDuplicateError`,
+P2002 → `ConflictException`) — как в `AuthService.register` для дублирующегося email.
+
 `ValidationPipe` в `main.ts` включён с `whitelist`, `forbidNonWhitelisted` и `transform`: любое
 неописанное в DTO поле в теле запроса приводит к 400, а `@Type(() => Number)` в query-DTO реально
 преобразует строки.
@@ -159,6 +167,7 @@ App Router, все страницы внутри группы `(dashboard)` с �
 - Миграций пока нет: первую нужно создать через `prisma:migrate --name init`.
 - `db:seed` создаёт `demo@example.com` с паролем `password123`.
 - `GET /api/transactions` — единственный листинг с пагинацией, возвращает `{ data, meta }`;
-  остальные листинги возвращают голый массив.
+  остальные листинги возвращают голый массив. У категорий есть фильтры `?type=` и `?parentId=`
+  (`QueryCategoriesDto`); значения вне `TransactionType` дают 400.
 - Фронтенд токен пока нигде не сохраняет: `api-client.ts` держит его в памяти
   (`setAuthToken`), страницы остаются заглушками без фетчинга.
