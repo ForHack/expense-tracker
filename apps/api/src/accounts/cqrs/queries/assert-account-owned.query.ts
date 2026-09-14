@@ -11,9 +11,7 @@ export class AssertAccountOwnedQuery {
 }
 
 @QueryHandler(AssertAccountOwnedQuery)
-export class AssertAccountOwnedHandler
-  implements IQueryHandler<AssertAccountOwnedQuery, Account>
-{
+export class AssertAccountOwnedHandler implements IQueryHandler<AssertAccountOwnedQuery, Account> {
   constructor(private readonly accountsService: AccountsService) {}
 
   execute(query: AssertAccountOwnedQuery): Promise<Account> {

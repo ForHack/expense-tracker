@@ -11,9 +11,10 @@ export class AssertCategoryOwnedQuery {
 }
 
 @QueryHandler(AssertCategoryOwnedQuery)
-export class AssertCategoryOwnedHandler
-  implements IQueryHandler<AssertCategoryOwnedQuery, Category>
-{
+export class AssertCategoryOwnedHandler implements IQueryHandler<
+  AssertCategoryOwnedQuery,
+  Category
+> {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   execute(query: AssertCategoryOwnedQuery): Promise<Category> {

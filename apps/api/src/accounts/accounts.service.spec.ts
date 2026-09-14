@@ -39,9 +39,9 @@ describe('AccountsService: изоляция по пользователю', () =
   it('update не трогает БД, если счёт чужой', async () => {
     prisma.account.findFirst.mockResolvedValue(null);
 
-    await expect(
-      service.update('acc-1', 'другой-user', { name: 'Переименован' }),
-    ).rejects.toThrow(NotFoundException);
+    await expect(service.update('acc-1', 'другой-user', { name: 'Переименован' })).rejects.toThrow(
+      NotFoundException,
+    );
     expect(prisma.account.update).not.toHaveBeenCalled();
   });
 
