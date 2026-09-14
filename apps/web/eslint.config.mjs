@@ -6,6 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const compat = new FlatCompat({ baseDirectory: __dirname });
 
 export default [
-  { ignores: ['.next/**', 'node_modules/**'] },
+  // next-env.d.ts генерирует Next, и его triple-slash-ссылки не проходят next/typescript
+  { ignores: ['.next/**', 'node_modules/**', 'next-env.d.ts'] },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
 ];
