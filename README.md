@@ -37,19 +37,26 @@ pnpm dev
 
 ## Скрипты в корне
 
-| Команда | Описание |
-| --- | --- |
-| `pnpm dev` | Параллельный запуск web и api |
-| `pnpm build` | Сборка всех пакетов |
-| `pnpm lint` | ESLint по всем пакетам |
-| `pnpm typecheck` | Проверка типов |
-| `pnpm format` | Prettier |
+| Команда          | Описание                      |
+| ---------------- | ----------------------------- |
+| `pnpm dev`       | Параллельный запуск web и api |
+| `pnpm build`     | Сборка всех пакетов           |
+| `pnpm lint`      | ESLint по всем пакетам        |
+| `pnpm typecheck` | Проверка типов                |
+| `pnpm format`    | Prettier                      |
 
 ## API
 
 CRUD-ресурсы под префиксом `/api`: `users`, `accounts`, `categories`, `transactions`, `budgets`.
-`GET /api/transactions` поддерживает фильтры `userId`, `accountId`, `categoryId`, `type`, `from`, `to`
-и пагинацию `page`/`perPage`, возвращая `{ data, meta }`.
+`GET /api/transactions` поддерживает фильтры `accountId`, `categoryId`, `type`, `dateFrom`, `dateTo`
+и пагинацию `page`/`perPage`, возвращая `{ data, meta }`. Владелец берётся из токена, поэтому
+`userId` в query нет, а неизвестные параметры (включая прежние `from`/`to`) дают 400 —
+это `forbidNonWhitelisted` в `ValidationPipe`.
+
+`GET /api/transactions/summary?month=&year=` — агрегация за календарный месяц (UTC):
+`{ month, year, income, expense, balance, byCategory }`, суммы строками. Оба параметра обязательны,
+иначе 400. `TRANSFER` не входит в `income`/`expense`/`balance` (это перемещение между своими
+счетами), но встречается в `byCategory`; там же строка с `categoryId: null` — транзакции без категории.
 
 ## Соглашения
 

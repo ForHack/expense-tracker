@@ -60,6 +60,23 @@ export interface CreateTransactionDto {
 
 export type UpdateTransactionDto = Partial<CreateTransactionDto>;
 
+/** Query GET /transactions — вместе с `PaginationQuery` из api.ts. */
+export interface QueryTransactionsDto {
+  accountId?: string;
+  categoryId?: string;
+  type?: TransactionType;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  perPage?: number;
+}
+
+/** Query GET /transactions/summary — оба поля обязательны. */
+export interface QuerySummaryDto {
+  month: number;
+  year: number;
+}
+
 export interface CreateBudgetDto {
   amount: string;
   period: BudgetPeriod;

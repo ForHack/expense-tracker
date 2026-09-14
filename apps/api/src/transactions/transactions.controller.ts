@@ -2,9 +2,14 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { Transaction } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { QuerySummaryDto } from './dto/query-summary.dto';
 import { QueryTransactionsDto } from './dto/query-transactions.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
-import { PaginatedTransactions, TransactionsService } from './transactions.service';
+import {
+  PaginatedTransactions,
+  TransactionsService,
+  TransactionsSummary,
+} from './transactions.service';
 
 @Controller('transactions')
 export class TransactionsController {
@@ -24,6 +29,15 @@ export class TransactionsController {
     @Query() query: QueryTransactionsDto,
   ): Promise<PaginatedTransactions> {
     return this.transactionsService.findAll(userId, query);
+  }
+
+  /** Объявлен выше `@Get(':id')`: иначе Nest сматчит «summary» как id и вернёт 404. */
+  @Get('summary')
+  summary(
+    @CurrentUser('id') userId: string,
+    @Query() query: QuerySummaryDto,
+  ): Promise<TransactionsSummary> {
+    return this.transactionsService.summary(userId, query);
   }
 
   @Get(':id')

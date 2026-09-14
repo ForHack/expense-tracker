@@ -17,11 +17,11 @@ export class QueryTransactionsDto {
 
   @IsOptional()
   @IsDateString()
-  from?: string;
+  dateFrom?: string;
 
   @IsOptional()
   @IsDateString()
-  to?: string;
+  dateTo?: string;
 
   @IsOptional()
   @Type(() => Number)

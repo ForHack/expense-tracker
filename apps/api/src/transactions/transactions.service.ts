@@ -1,16 +1,34 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
-import { Prisma, Transaction } from '@prisma/client';
+import { Prisma, Transaction, TransactionType } from '@prisma/client';
 import { AssertAccountOwnedQuery } from '../accounts/cqrs';
 import { AssertCategoryOwnedQuery } from '../categories/cqrs';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { QuerySummaryDto } from './dto/query-summary.dto';
 import { QueryTransactionsDto } from './dto/query-transactions.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 
 export interface PaginatedTransactions {
   data: Transaction[];
   meta: { page: number; perPage: number; total: number; totalPages: number };
+}
+
+/** Сумма по одной категории за месяц; `categoryId: null` — транзакции без категории. */
+export interface SummaryCategoryTotal {
+  categoryId: string | null;
+  name: string | null;
+  type: TransactionType;
+  total: string;
+}
+
+export interface TransactionsSummary {
+  month: number;
+  year: number;
+  income: string;
+  expense: string;
+  balance: string;
+  byCategory: SummaryCategoryTotal[];
 }
 
 const DEFAULT_PER_PAGE = 20;
@@ -38,10 +56,10 @@ export class TransactionsService {
       categoryId: query.categoryId,
       type: query.type,
       date:
-        query.from || query.to
+        query.dateFrom || query.dateTo
           ? {
-              gte: query.from ? new Date(query.from) : undefined,
-              lte: query.to ? new Date(query.to) : undefined,
+              gte: query.dateFrom ? new Date(query.dateFrom) : undefined,
+              lte: query.dateTo ? new Date(query.dateTo) : undefined,
             }
           : undefined,
     };
@@ -60,6 +78,68 @@ export class TransactionsService {
     return {
       data,
       meta: { page, perPage, total, totalPages: Math.ceil(total / perPage) },
+    };
+  }
+
+  /**
+   * Итоги за календарный месяц (UTC) плюс разбивка по категориям.
+   * `TRANSFER` — перемещение между своими счетами, поэтому в income/expense/balance
+   * он не входит, но в `byCategory` строки с таким типом появляются.
+   */
+  async summary(userId: string, { month, year }: QuerySummaryDto): Promise<TransactionsSummary> {
+    const where: Prisma.TransactionWhereInput = {
+      userId,
+      // Полуинтервал [первое число месяца, первое число следующего) — не теряет
+      // пограничные миллисекунды последнего дня.
+      date: { gte: new Date(Date.UTC(year, month - 1, 1)), lt: new Date(Date.UTC(year, month, 1)) },
+    };
+
+    const [byType, byCategoryRaw] = await this.prisma.$transaction([
+      // orderBy у groupBy обязателен по типам Prisma, даже когда порядок не важен.
+      this.prisma.transaction.groupBy({
+        by: ['type'],
+        where,
+        _sum: { amount: true },
+        orderBy: { type: 'asc' },
+      }),
+      this.prisma.transaction.groupBy({
+        by: ['categoryId', 'type'],
+        where,
+        _sum: { amount: true },
+        orderBy: [{ categoryId: 'asc' }, { type: 'asc' }],
+      }),
+    ]);
+
+    const totalOf = (type: TransactionType): Prisma.Decimal =>
+      byType.find((row) => row.type === type)?._sum?.amount ?? new Prisma.Decimal(0);
+
+    const income = totalOf(TransactionType.INCOME);
+    const expense = totalOf(TransactionType.EXPENSE);
+
+    // Имена категорий берём одним запросом, чтобы не плодить N+1 внутри map.
+    const categoryIds = byCategoryRaw
+      .map((row) => row.categoryId)
+      .filter((id): id is string => id !== null);
+    const categories = categoryIds.length
+      ? await this.prisma.category.findMany({
+          where: { id: { in: categoryIds }, userId },
+          select: { id: true, name: true },
+        })
+      : [];
+    const namesById = new Map(categories.map((category) => [category.id, category.name]));
+
+    return {
+      month,
+      year,
+      income: income.toFixed(2),
+      expense: expense.toFixed(2),
+      balance: income.minus(expense).toFixed(2),
+      byCategory: byCategoryRaw.map((row) => ({
+        categoryId: row.categoryId,
+        name: row.categoryId ? (namesById.get(row.categoryId) ?? null) : null,
+        type: row.type,
+        total: (row._sum?.amount ?? new Prisma.Decimal(0)).toFixed(2),
+      })),
     };
   }
 
