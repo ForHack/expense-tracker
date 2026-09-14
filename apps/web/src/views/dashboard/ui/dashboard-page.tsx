@@ -11,6 +11,7 @@ import {
   TRANSACTIONS_PER_PAGE,
   TransactionsList,
   TransactionsPagination,
+  buildTransactionsHref,
 } from '@/widgets/transactions-list';
 
 interface DashboardSearchParams {
@@ -65,6 +66,12 @@ export async function DashboardPage({
 
   if (!user) {
     redirect(ROUTES.login);
+  }
+
+  const { meta } = transactions;
+  if (meta.total > 0 && meta.page > meta.totalPages) {
+    // Руками введённый `?page=999` иначе показал бы пустую таблицу и «Стр. 999 из 2»
+    redirect(buildTransactionsHref(ROUTES.dashboard, meta.totalPages, { type, categoryId }));
   }
 
   return (

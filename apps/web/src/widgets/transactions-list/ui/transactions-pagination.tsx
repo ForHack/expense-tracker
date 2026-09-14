@@ -1,13 +1,14 @@
 import type { PaginationMeta } from '@expense-tracker/shared-types';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import Link from 'next/link';
-import { buttonVariants } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/utils';
+import { buttonVariants } from '@/shared/ui/button';
+import { buildTransactionsHref, type TransactionListFilters } from '../model/config';
 
 export interface TransactionsPaginationProps {
   meta: PaginationMeta;
   /** Действующие фильтры — переносим их в ссылки, иначе перелистывание сбросит выборку. */
-  filters: { type?: string; categoryId?: string };
+  filters: TransactionListFilters;
   pathname: string;
 }
 
@@ -17,22 +18,6 @@ export interface TransactionsPaginationProps {
  */
 export function TransactionsPagination({ meta, filters, pathname }: TransactionsPaginationProps) {
   const totalPages = Math.max(meta.totalPages, 1);
-
-  function hrefForPage(page: number): string {
-    const params = new URLSearchParams();
-    if (filters.type) {
-      params.set('type', filters.type);
-    }
-    if (filters.categoryId) {
-      params.set('categoryId', filters.categoryId);
-    }
-    if (page > 1) {
-      params.set('page', String(page));
-    }
-    const search = params.toString();
-    return search ? `${pathname}?${search}` : pathname;
-  }
-
   const hasPrev = meta.page > 1;
   const hasNext = meta.page < totalPages;
   const linkClass = buttonVariants({ variant: 'outline', size: 'sm' });
@@ -46,7 +31,7 @@ export function TransactionsPagination({ meta, filters, pathname }: Transactions
 
       <div className="flex gap-2">
         <Link
-          href={hrefForPage(meta.page - 1)}
+          href={buildTransactionsHref(pathname, meta.page - 1, filters)}
           className={cn(linkClass, !hasPrev && disabledClass)}
           aria-disabled={!hasPrev}
           tabIndex={hasPrev ? undefined : -1}
@@ -55,7 +40,7 @@ export function TransactionsPagination({ meta, filters, pathname }: Transactions
           Назад
         </Link>
         <Link
-          href={hrefForPage(meta.page + 1)}
+          href={buildTransactionsHref(pathname, meta.page + 1, filters)}
           className={cn(linkClass, !hasNext && disabledClass)}
           aria-disabled={!hasNext}
           tabIndex={hasNext ? undefined : -1}
