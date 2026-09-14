@@ -151,23 +151,127 @@ DTO принимают ISO-строки (`@IsDateString()`), сервисы ко
 см. `TransactionsService.create` и `BudgetsService.update`. В `BudgetsService.update` `endDate`
 различает `undefined` (не трогать) и явный `null` (сделать бессрочным).
 
-### Фронтенд
+### Фронтенд: Feature-Sliced Design
 
-App Router, все страницы внутри группы `(dashboard)` с общим сайдбаром; `/` редиректит на `/dashboard`.
-Страницы сейчас — заглушки без фетчинга.
+`apps/web/src` организован по FSD. Слои снизу вверх — **импорт разрешён только вниз**,
+слой не может импортировать сам себя через соседний слайс:
 
-`src/lib/api-client.ts` — единственная точка обращения к API: базовый URL из `NEXT_PUBLIC_API_URL`,
-ошибки заворачиваются в `ApiRequestError`. Новые запросы делай через `api.get/post/patch/delete`.
+| Слой        | Что лежит                                                                   |
+| ----------- | --------------------------------------------------------------------------- |
+| `shared/`   | `api/` (клиенты fetch), `config/` (`ROUTES`), `lib/` (`cn`), `ui/` (shadcn) |
+| `entities/` | предметные сущности: `session/` — cookie, разбор JWT, `getCurrentUser()`    |
+| `features/` | пользовательские сценарии: `auth/` — формы входа/регистрации, выход         |
+| `widgets/`  | составные блоки страниц: `app-sidebar/`                                     |
+| `views/`    | слой страниц FSD (вместо `pages`, чтобы не путать с Next)                   |
+| `app/`      | **только** роутинг Next: `page.tsx`, `layout.tsx`, Route Handlers           |
+
+Внутри слайса — сегменты `ui/`, `model/`, `api/`, `lib/` и `index.ts` с публичным API.
+**Импортируй слайс через его `index.ts`** (`@/features/auth`, `@/entities/session`), а не файлом внутри.
+Путь к файлу допустим только там, где баррель тянет несовместимый рантайм — таких мест три,
+все с комментарием: `middleware.ts` → `@/entities/session/model/token` (баррель тянет `next/headers`,
+запрещённый в edge), Route Handlers → `@/features/auth/model/schemas` (баррель тянет `'use client'`-формы)
+и `@/shared/api/route-error` (тянет `next/server`). Барель `@/shared/ui` shadcn не создаёт —
+компоненты импортируются поштучно (`@/shared/ui/button`), как в апстриме.
+
+Файлы в `src/app/` держи тонкими: `page.tsx` экспортирует компонент из `views` и свою `metadata`.
+Новый экран — это новый слайс в `views/`, а не разметка в `app/`.
+
+#### UI-кит
+
+shadcn/ui (style `new-york`, base color `neutral`, Tailwind 4, CSS-переменные).
+Настройки — `apps/web/components.json`, алиасы переопределены под FSD (`ui` и `components` →
+`@/shared/ui`, `utils` → `@/shared/lib/utils`). Добавление компонента:
+
+```bash
+cd apps/web && pnpm dlx shadcn@latest add <component>
+```
+
+CLI кладёт файл в `src/shared/ui/`, но **ломает импорт `cn`** — пишет `from "cn"` вместо
+`@/shared/lib/utils`; после `add` проверь это и не дай поставить мусорный npm-пакет `cn`.
+Токены темы (`--primary`, `--sidebar`, …) живут в `src/app/globals.css` — правь цвета там,
+а не классами в компонентах. Иконки — `lucide-react`.
+
+#### Работа с API
+
+Два клиента, оба в `shared/api`:
+
+- `api`/`apiFetch` — обращение к **Nest** (`NEXT_PUBLIC_API_URL`). Токен передаётся явной
+  опцией `{ token }`; модульного состояния больше нет. Используется серверным кодом.
+- `routeFetch` — обращение к **своим Route Handlers** Next из браузера. Токен подставлять
+  не нужно: httpOnly-cookie уходит сама.
+
+Ошибки обоих заворачиваются в `ApiRequestError` (`status` + `payload: ApiError`).
+В Route Handlers разворачивай её через `toErrorResponse` из `@/shared/api/route-error` —
+статус и текст от Nest доходят до формы как есть (401 «неверный пароль», 409 «email занят»).
+
+#### Сессия
+
+Access-токен лежит в **httpOnly-cookie `access_token`**, поэтому клиентский JS его не видит.
+Вход идёт не напрямую в Nest, а через прокси-Route Handlers Next
+(`src/app/api/auth/{login,register,logout}/route.ts`): они зовут Nest, ставят cookie и отдают
+браузеру только профиль (`User`), без токена. Срок жизни cookie берётся из `exp` самого JWT
+(`readTokenExpiry`), то есть автоматически совпадает с `JWT_EXPIRES_IN`.
+
+Защита маршрутов двухуровневая:
+
+1. `src/middleware.ts` — до рендера: нет cookie или она просрочена по `exp` → редирект на
+   `/login?from=<путь>`; есть сессия, а запрошен `/login`/`/register` → редирект на `/dashboard`.
+   Подпись токена здесь **не** проверяется (edge, без секрета) — это только дешёвый фильтр.
+2. `app/(dashboard)/layout.tsx` — подтверждает сессию реальным `GET /auth/me`
+   (`getCurrentUser()`), потому что между проверками токен мог истечь. `null` → `redirect('/login')`.
+
+Список публичных страниц — `PUBLIC_ROUTES` в `shared/config/routes.ts`; добавляя страницу без
+авторизации, правь именно его. Параметр `from` перед редиректом проверяется на относительность
+(`//evil.com` тоже начинается со слеша) — см. `views/login`.
+
+Выхода на сервере нет: refresh-токенов и серверных сессий API не держит, поэтому `logout`
+просто гасит cookie, а сам JWT доживает свой срок.
+
+#### Формы
+
+`react-hook-form` + `zod` + `Form`-обвязка shadcn. Схемы лежат в `model/schemas.ts` слайса и
+**повторяют class-validator бэкенда** (пароль ≥ 8, `currency` ровно 3 символа) — при изменении DTO
+в API правь и схему. Одна и та же схема работает на клиенте (inline-ошибки полей) и в Route
+Handler (`safeParse` → 400 в формате `ValidationPipe`). Ошибка уровня формы (401/409/сеть)
+показывается через `FormError`, а не в поле.
+
+## Git-коммиты
+
+Сообщения — по [Conventional Commits](https://www.conventionalcommits.org/ru/v1.0.0/):
+
+```
+<type>(<scope>): <краткое описание>
+
+<тело — зачем, а не что; опционально>
+```
+
+- **type**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`, `style`.
+- **scope** — пакет или домен, откуда изменение: `api`, `web`, `shared-types`, `deps`
+  либо конкретный модуль (`transactions`, `auth`, `categories`). Затронуто несколько —
+  скоуп опускается.
+- Заголовок: в повелительном наклонении и на английском, до 72 символов, со строчной буквы,
+  без точки в конце (`feat(api): add monthly transactions summary`). Тело — по-русски, если так проще.
+- Ломающее изменение API-контракта — `!` после скоупа (`feat(api)!: …`) и абзац
+  `BREAKING CHANGE: …` в теле.
+- Коммит атомарный: одна логическая правка. Изменения в `apps/api` и `apps/web`,
+  не связанные общей фичей, разносятся по разным коммитам. Правки в `packages/shared-types`
+  идут вместе с кодом, который их использует.
+- Сгенерированные файлы (`pnpm-lock.yaml`, миграции Prisma) коммитятся вместе с изменением,
+  которое их породило, а не отдельно.
 
 ## Состояние проекта
 
 - Аутентификация по JWT работает; ролей и refresh-токенов нет.
 - `UsersController` умеет только операции над собой (`GET/PATCH/DELETE /api/users/me`);
   листинга всех пользователей нет, регистрация — в `POST /api/auth/register`.
-- Миграций пока нет: первую нужно создать через `prisma:migrate --name init`.
+- Начальная миграция есть (`prisma/migrations/20260910143122_init`).
 - `db:seed` создаёт `demo@example.com` с паролем `password123`.
 - `GET /api/transactions` — единственный листинг с пагинацией, возвращает `{ data, meta }`;
+  фильтры дат называются `dateFrom`/`dateTo`. Есть агрегация `GET /api/transactions/summary`
+  с обязательными `month`/`year`: итоги за месяц (UTC) + разбивка `byCategory`; `TRANSFER`
+  в `income`/`expense`/`balance` не входит. Маршрут объявлен выше `@Get(':id')` — иначе 404.
   остальные листинги возвращают голый массив. У категорий есть фильтры `?type=` и `?parentId=`
   (`QueryCategoriesDto`); значения вне `TransactionType` дают 400.
-- Фронтенд токен пока нигде не сохраняет: `api-client.ts` держит его в памяти
-  (`setAuthToken`), страницы остаются заглушками без фетчинга.
+- Фронтенд: вход, регистрация и выход работают на httpOnly-cookie, маршруты защищены
+  middleware + проверкой в layout дашборда. Страницы самого дашборда (обзор, транзакции,
+  счета, категории, бюджеты) — всё ещё заглушки без фетчинга, слайсов `views/` для них нет.

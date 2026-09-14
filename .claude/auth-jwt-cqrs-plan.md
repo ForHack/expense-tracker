@@ -46,13 +46,13 @@
 export class UsersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  createSafe(data: Prisma.UserCreateInput): Promise<SafeUser>
-  findMany(): Promise<SafeUser[]>
-  findById(id: string): Promise<SafeUser | null>
+  createSafe(data: Prisma.UserCreateInput): Promise<SafeUser>;
+  findMany(): Promise<SafeUser[]>;
+  findById(id: string): Promise<SafeUser | null>;
   /** С passwordHash — только для AuthService. */
-  findByEmailWithHash(email: string): Promise<User | null>
-  updateSafe(id: string, data: Prisma.UserUpdateInput): Promise<SafeUser>
-  deleteSafe(id: string): Promise<SafeUser>
+  findByEmailWithHash(email: string): Promise<User | null>;
+  updateSafe(id: string, data: Prisma.UserUpdateInput): Promise<SafeUser>;
+  deleteSafe(id: string): Promise<SafeUser>;
 }
 ```
 
