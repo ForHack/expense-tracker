@@ -21,7 +21,7 @@ import {
 import { Input } from '@/shared/ui/input';
 import { register } from '../api/auth-api';
 import { registerFormSchema, toRegisterPayload, type RegisterFormValues } from '../model/schemas';
-import { FormError } from './form-error';
+import { FormError } from '@/shared/ui/form-error';
 
 export function RegisterForm() {
   const router = useRouter();

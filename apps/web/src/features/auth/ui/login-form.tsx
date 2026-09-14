@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/shared/ui/input';
 import { login } from '../api/auth-api';
 import { loginSchema, type LoginFormValues } from '../model/schemas';
-import { FormError } from './form-error';
+import { FormError } from '@/shared/ui/form-error';
 
 export function LoginForm({ redirectTo = ROUTES.dashboard }: { redirectTo?: string }) {
   const router = useRouter();

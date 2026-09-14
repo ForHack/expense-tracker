@@ -16,5 +16,10 @@ export const AUTH_ROUTES = {
   logout: '/api/auth/logout',
 } as const;
 
+/** Route Handlers Next для работы с данными: браузер ходит сюда, а не в Nest напрямую. */
+export const API_ROUTES = {
+  transactions: '/api/transactions',
+} as const;
+
 /** Страницы, доступные без сессии. Всё остальное middleware уводит на /login. */
 export const PUBLIC_ROUTES: string[] = [ROUTES.login, ROUTES.register];
