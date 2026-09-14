@@ -235,6 +235,36 @@ Access-токен лежит в **httpOnly-cookie `access_token`**, поэтом
 Handler (`safeParse` → 400 в формате `ValidationPipe`). Ошибка уровня формы (401/409/сеть)
 показывается через `FormError`, а не в поле.
 
+## Git-ветки (GitHub Flow)
+
+Базовая ветка — **`master`**: всегда рабочая и деплоимая, коммитить в неё напрямую нельзя.
+Любая работа начинается с новой ветки от актуального `master`:
+
+```bash
+git checkout master && git pull
+git checkout -b feature/<краткое-описание>
+```
+
+Именование: `<тип>/<kebab-case-описание>` на английском, до ~40 символов.
+
+- **тип** — тот же набор, что и в Conventional Commits: `feature` (вместо `feat`), `fix`,
+  `refactor`, `docs`, `chore`, `test`, `build`, `ci`, `perf`, `style`.
+- Если фича относится к одному пакету, начинай описание с его имени:
+  `feature/web-dashboard-overview`, `fix/api-transactions-summary-tz`.
+- Точку входа для срочного багфикса отдельно не заводим — `fix/*` от `master` и есть hotfix.
+
+Жизненный цикл ветки:
+
+1. Мелкие атомарные коммиты по правилам ниже.
+2. Перед PR — `pnpm lint`, `pnpm typecheck`, `pnpm build` и тесты затронутого пакета.
+3. `git push -u origin <ветка>` → PR в `master`; заголовок PR оформляется как заголовок коммита
+   (`feat(web): add dashboard overview`), в описании — что и зачем.
+4. Ветка обновляется от `master` через **rebase**, а не merge-коммитом:
+   `git fetch origin && git rebase origin/master`.
+5. После мерджа PR ветка удаляется (локально и на remote).
+
+Одна ветка = одна фича. Не тащи в неё несвязанные правки — для них новая ветка от `master`.
+
 ## Git-коммиты
 
 Сообщения — по [Conventional Commits](https://www.conventionalcommits.org/ru/v1.0.0/):
