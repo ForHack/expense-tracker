@@ -9,6 +9,7 @@ import { QuerySummaryDto } from './dto/query-summary.dto';
 import { QueryTransactionsDto } from './dto/query-transactions.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 
+/** Страница списка транзакций: сами записи плюс метаданные пагинации. */
 export interface PaginatedTransactions {
   data: Transaction[];
   meta: { page: number; perPage: number; total: number; totalPages: number };
@@ -22,6 +23,7 @@ export interface SummaryCategoryTotal {
   total: string;
 }
 
+/** Ответ `GET /api/transactions/summary`: суммы за месяц строками с двумя знаками. */
 export interface TransactionsSummary {
   month: number;
   year: number;
@@ -31,8 +33,13 @@ export interface TransactionsSummary {
   byCategory: SummaryCategoryTotal[];
 }
 
+/** Размер страницы, если клиент не прислал `perPage`. */
 const DEFAULT_PER_PAGE = 20;
 
+/**
+ * Бизнес-логика транзакций: CRUD, листинг с фильтрами и пагинацией, месячные итоги.
+ * Все методы работают только с записями переданного пользователя.
+ */
 @Injectable()
 export class TransactionsService {
   constructor(
@@ -40,12 +47,32 @@ export class TransactionsService {
     private readonly queryBus: QueryBus,
   ) {}
 
+  /**
+   * Создаёт транзакцию, предварительно убедившись, что счёт и категория принадлежат
+   * тому же пользователю. `date` приходит ISO-строкой и конвертируется в `Date`.
+   *
+   * @param userId Идентификатор владельца из JWT (в теле запроса его нет).
+   * @param dto Данные транзакции: сумма строкой, тип, дата, счёт и опционально категория.
+   * @returns Созданную транзакцию без вложенных связей.
+   * @throws {NotFoundException} Счёт или категория не найдены либо принадлежат другому пользователю.
+   */
   async create(userId: string, dto: CreateTransactionDto): Promise<Transaction> {
     const { date, ...rest } = dto;
     await this.assertRelationsOwned(userId, dto.accountId, dto.categoryId);
     return this.prisma.transaction.create({ data: { ...rest, userId, date: new Date(date) } });
   }
 
+  /**
+   * Отдаёт страницу транзакций пользователя, отсортированных по дате по убыванию,
+   * с включёнными `account` и `category`. Незаданные фильтры игнорируются.
+   *
+   * @param userId Идентификатор владельца из JWT.
+   * @param query Фильтры (`accountId`, `categoryId`, `type`, `dateFrom`, `dateTo`)
+   *   и пагинация (`page` — по умолчанию 1, `perPage` — по умолчанию 20).
+   * @returns Объект `{ data, meta }`, где `meta` содержит страницу, размер страницы,
+   *   общее число подходящих записей и число страниц.
+   * @throws Ничего не бросает: пустая выборка — это `data: []`, а не 404.
+   */
   async findAll(userId: string, query: QueryTransactionsDto): Promise<PaginatedTransactions> {
     const page = query.page ?? 1;
     const perPage = query.perPage ?? DEFAULT_PER_PAGE;
@@ -85,6 +112,13 @@ export class TransactionsService {
    * Итоги за календарный месяц (UTC) плюс разбивка по категориям.
    * `TRANSFER` — перемещение между своими счетами, поэтому в income/expense/balance
    * он не входит, но в `byCategory` строки с таким типом появляются.
+   *
+   * @param userId Идентификатор владельца из JWT.
+   * @param query Месяц (1–12) и год — оба обязательны.
+   * @returns Суммы `income`, `expense`, `balance` строками с двумя знаками после запятой
+   *   и `byCategory` с суммой по каждой паре «категория + тип»; у транзакций без категории
+   *   `categoryId` и `name` равны `null`.
+   * @throws Ничего не бросает: месяц без транзакций даёт нули и пустой `byCategory`.
    */
   async summary(userId: string, { month, year }: QuerySummaryDto): Promise<TransactionsSummary> {
     const where: Prisma.TransactionWhereInput = {
@@ -143,7 +177,15 @@ export class TransactionsService {
     };
   }
 
-  /** Ищет только среди транзакций пользователя: чужой id неотличим от несуществующего. */
+  /**
+   * Возвращает одну транзакцию вместе со связанными счётом и категорией.
+   * Ищет только среди транзакций пользователя: чужой id неотличим от несуществующего.
+   *
+   * @param id Идентификатор транзакции.
+   * @param userId Идентификатор владельца из JWT.
+   * @returns Транзакцию с включёнными `account` и `category`.
+   * @throws {NotFoundException} Транзакции нет или она принадлежит другому пользователю.
+   */
   async findOne(id: string, userId: string): Promise<Transaction> {
     const transaction = await this.prisma.transaction.findFirst({
       where: { id, userId },
@@ -155,6 +197,17 @@ export class TransactionsService {
     return transaction;
   }
 
+  /**
+   * Частично обновляет транзакцию. Принадлежность проверяется через {@link findOne},
+   * новые `accountId`/`categoryId` — через те же CQRS-запросы, что и при создании.
+   * Поля, которых нет в DTO, не трогаются.
+   *
+   * @param id Идентификатор транзакции.
+   * @param userId Идентификатор владельца из JWT.
+   * @param dto Изменяемые поля; `date` задаётся ISO-строкой.
+   * @returns Обновлённую транзакцию без вложенных связей.
+   * @throws {NotFoundException} Транзакции нет либо новый счёт/категория чужие или не существуют.
+   */
   async update(id: string, userId: string, dto: UpdateTransactionDto): Promise<Transaction> {
     await this.findOne(id, userId);
     await this.assertRelationsOwned(userId, dto.accountId, dto.categoryId);
@@ -165,6 +218,14 @@ export class TransactionsService {
     });
   }
 
+  /**
+   * Удаляет транзакцию пользователя.
+   *
+   * @param id Идентификатор транзакции.
+   * @param userId Идентификатор владельца из JWT.
+   * @returns Удалённую запись — как она выглядела до удаления.
+   * @throws {NotFoundException} Транзакции нет или она принадлежит другому пользователю.
+   */
   async remove(id: string, userId: string): Promise<Transaction> {
     await this.findOne(id, userId);
     return this.prisma.transaction.delete({ where: { id } });
@@ -173,6 +234,13 @@ export class TransactionsService {
   /**
    * Счёт и категория принадлежат другим модулям, поэтому проверка идёт через QueryBus,
    * а не прямым обращением к их таблицам.
+   *
+   * @param userId Идентификатор владельца из JWT.
+   * @param accountId Проверяемый счёт; `undefined` — проверка пропускается.
+   * @param categoryId Проверяемая категория; `undefined` — проверка пропускается.
+   * @returns Ничего: метод нужен только ради побочного эффекта — броска исключения.
+   * @throws {NotFoundException} Счёт или категория не найдены либо принадлежат другому пользователю
+   *   (исключение бросают `AccountsService.findOne` / `CategoriesService.findOne`).
    */
   private async assertRelationsOwned(
     userId: string,

@@ -35,7 +35,16 @@ export class CategoriesService {
     });
   }
 
-  /** Ищет только среди категорий пользователя: чужой id неотличим от несуществующего. */
+  /**
+   * Возвращает категорию пользователя вместе с подкатегориями. Ищет только среди его
+   * категорий: чужой id неотличим от несуществующего. Через этот метод
+   * `AssertCategoryOwnedHandler` проверяет принадлежность категории транзакции.
+   *
+   * @param id Идентификатор категории.
+   * @param userId Идентификатор владельца из JWT.
+   * @returns Категорию с включённым `children`.
+   * @throws {NotFoundException} Категории нет или она принадлежит другому пользователю.
+   */
   async findOne(id: string, userId: string): Promise<Category> {
     const category = await this.prisma.category.findFirst({
       where: { id, userId },

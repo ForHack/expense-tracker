@@ -19,7 +19,16 @@ export class AccountsService {
     });
   }
 
-  /** Ищет только среди счетов пользователя: чужой id неотличим от несуществующего. */
+  /**
+   * Возвращает счёт пользователя. Ищет только среди его счетов: чужой id неотличим
+   * от несуществующего. Через этот метод `AssertAccountOwnedHandler` проверяет
+   * принадлежность счёта при создании и обновлении транзакции.
+   *
+   * @param id Идентификатор счёта.
+   * @param userId Идентификатор владельца из JWT.
+   * @returns Найденный счёт.
+   * @throws {NotFoundException} Счёта нет или он принадлежит другому пользователю.
+   */
   async findOne(id: string, userId: string): Promise<Account> {
     const account = await this.prisma.account.findFirst({ where: { id, userId } });
     if (!account) {

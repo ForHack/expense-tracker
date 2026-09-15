@@ -1,7 +1,11 @@
 import { Type } from 'class-transformer';
 import { IsInt, Max, Min } from 'class-validator';
 
-/** Оба параметра обязательны: без месяца и года агрегировать нечего. */
+/**
+ * Query-параметры `GET /api/transactions/summary`.
+ * Оба параметра обязательны: без месяца и года агрегировать нечего.
+ * Границы периода считаются в UTC.
+ */
 export class QuerySummaryDto {
   /** Номер месяца, 1–12. */
   @Type(() => Number)
@@ -10,6 +14,7 @@ export class QuerySummaryDto {
   @Max(12)
   month!: number;
 
+  /** Год, 1970–2100. */
   @Type(() => Number)
   @IsInt()
   @Min(1970)
