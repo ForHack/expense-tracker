@@ -1,13 +1,16 @@
 # Новая функциональность - Создать модуль транзакций
 
 ## Контекст
+
 Проект: Nest.js + Next + PostgreSQL + Prisma
 Что уже есть: User, авторизация JWT, модуль категорий + frontend авторизации
 
 ## Задача
+
 Создай TransactionModule - центральный модуль приложения для учета доходов и расходов
 
 ## Модель данных
+
 Добавь модель Transaction в schema.prisma:
 
 id (String, uuid, @default(uuid()))
@@ -43,7 +46,7 @@ npx prisma migrate dev --name add-transactions
 - DELETE /transactions/:id: удалить
 
 ## Ограничения
+
 - Не добавлять зависимости если не указано в задаче
 - Используй class-validator для DTO
 - После реализации собирай проект
-
