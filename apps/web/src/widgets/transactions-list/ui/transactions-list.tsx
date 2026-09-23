@@ -26,9 +26,12 @@ export function TransactionsList({
 
       <TableBody>
         {transactions.length === 0 && (
-          <TableRow>
-            <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-              Транзакций нет — измените фильтры или добавьте первую.
+          <TableRow className="hover:bg-transparent">
+            <TableCell colSpan={6} className="py-16 text-center">
+              <p className="display-title text-lg text-muted-foreground">Пока пусто</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Измените фильтры или добавьте первую операцию.
+              </p>
             </TableCell>
           </TableRow>
         )}
@@ -38,11 +41,16 @@ export function TransactionsList({
             <TableCell className="whitespace-nowrap text-muted-foreground">
               {formatDate(transaction.date)}
             </TableCell>
-            <TableCell className="max-w-64 truncate">
+            <TableCell className="max-w-64 truncate font-medium">
               {transaction.note ?? <span className="text-muted-foreground">—</span>}
             </TableCell>
             <TableCell>
-              {transaction.category?.name ?? (
+              {transaction.category ? (
+                <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-semibold">
+                  <span className="size-1.5 rounded-full bg-primary" aria-hidden />
+                  {transaction.category.name}
+                </span>
+              ) : (
                 <span className="text-muted-foreground">Без категории</span>
               )}
             </TableCell>
@@ -51,7 +59,7 @@ export function TransactionsList({
               <TransactionTypeBadge type={transaction.type} />
             </TableCell>
             <TableCell
-              className={`text-right font-medium whitespace-nowrap ${amountColorClass(transaction.type)}`}
+              className={`display-title text-right text-sm whitespace-nowrap ${amountColorClass(transaction.type)}`}
             >
               {amountSign(transaction.type)}
               {formatMoney(transaction.amount, transaction.account.currency || currency)}

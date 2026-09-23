@@ -2,8 +2,8 @@ import { TransactionType } from '@expense-tracker/shared-types';
 import { Badge } from '@/shared/ui/badge';
 import { TRANSACTION_TYPE_LABELS } from '../model/types';
 
-const VARIANT_BY_TYPE: Record<TransactionType, 'default' | 'secondary' | 'outline'> = {
-  [TransactionType.INCOME]: 'default',
+const VARIANT_BY_TYPE: Record<TransactionType, 'accent' | 'secondary' | 'outline'> = {
+  [TransactionType.INCOME]: 'accent',
   [TransactionType.EXPENSE]: 'secondary',
   [TransactionType.TRANSFER]: 'outline',
 };

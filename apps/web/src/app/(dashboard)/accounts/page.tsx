@@ -1,8 +1,9 @@
+import { PagePlaceholder } from '@/widgets/page-placeholder';
+
 export default function AccountsPage() {
   return (
-    <section>
-      <h1 className="text-2xl font-semibold">Счета</h1>
-      <p className="mt-2 text-sm opacity-70">Кошельки, карты и накопительные счета с балансами.</p>
-    </section>
+    <PagePlaceholder eyebrow="Где лежат деньги" title="Твои" highlight="счета">
+      Кошельки, карты и накопительные счета с балансами.
+    </PagePlaceholder>
   );
 }

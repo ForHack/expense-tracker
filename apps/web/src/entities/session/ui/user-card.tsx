@@ -1,26 +1,27 @@
 import type { User } from '@expense-tracker/shared-types';
-import { UserRoundIcon } from 'lucide-react';
-import { Card, CardContent } from '@/shared/ui/card';
 
-/** Профиль на дашборде. Чистый компонент: данные приходят пропом из Server Component. */
+/**
+ * Профиль в шапке дашборда: аватар-инициал, имя и валюта счёта.
+ * Чистый компонент — данные приходят пропом из Server Component.
+ */
 export function UserCard({ user }: { user: User }) {
+  const name = user.name ?? 'Без имени';
+  const initial = (user.name ?? user.email).trim().charAt(0).toUpperCase();
+
   return (
-    <Card>
-      <CardContent className="flex items-center gap-4">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted">
-          <UserRoundIcon className="size-5 text-muted-foreground" />
-        </div>
+    <div className="shadow-soft flex items-center gap-3 rounded-full bg-card py-2 pr-2 pl-3">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary font-display text-sm font-bold text-primary-foreground">
+        {initial}
+      </div>
 
-        <div className="min-w-0">
-          <div className="truncate font-medium">{user.name ?? 'Без имени'}</div>
-          <div className="truncate text-sm text-muted-foreground">{user.email}</div>
-        </div>
+      <div className="min-w-0 pr-1">
+        <div className="truncate text-sm font-semibold">{name}</div>
+        <div className="truncate text-xs text-muted-foreground">{user.email}</div>
+      </div>
 
-        <div className="ml-auto text-right text-sm text-muted-foreground">
-          <div>Валюта</div>
-          <div className="font-medium text-foreground">{user.currency}</div>
-        </div>
-      </CardContent>
-    </Card>
+      <span className="eyebrow rounded-full bg-accent px-3 py-2 text-accent-foreground">
+        {user.currency}
+      </span>
+    </div>
   );
 }

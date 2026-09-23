@@ -26,9 +26,9 @@ export function amountSign(type: TransactionType): string {
 
 export function amountColorClass(type: TransactionType): string {
   if (type === TransactionType.INCOME) {
-    return 'text-emerald-600';
+    return 'text-positive';
   }
-  return type === TransactionType.EXPENSE ? 'text-rose-600' : 'text-muted-foreground';
+  return type === TransactionType.EXPENSE ? 'text-destructive' : 'text-muted-foreground';
 }
 
 /** Значение, которым в URL и селектах кодируется «все» — пустую строку Select не принимает. */

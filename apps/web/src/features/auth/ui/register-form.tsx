@@ -143,7 +143,7 @@ export function RegisterForm() {
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" size="lg" className="mt-2 w-full" disabled={isSubmitting}>
           {isSubmitting && <Loader2Icon className="animate-spin" />}
           Создать аккаунт
         </Button>

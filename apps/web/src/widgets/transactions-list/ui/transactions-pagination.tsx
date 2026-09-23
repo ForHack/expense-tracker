@@ -25,8 +25,8 @@ export function TransactionsPagination({ meta, filters, pathname }: Transactions
 
   return (
     <nav className="flex items-center justify-between gap-4" aria-label="Страницы транзакций">
-      <p className="text-sm text-muted-foreground">
-        Всего: {meta.total} · Стр. {meta.page} из {totalPages}
+      <p className="eyebrow text-muted-foreground">
+        Всего {meta.total} · стр. {meta.page} из {totalPages}
       </p>
 
       <div className="flex gap-2">

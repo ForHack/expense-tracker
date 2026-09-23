@@ -1,31 +1,26 @@
 import Link from 'next/link';
 import { RegisterForm } from '@/features/auth';
 import { ROUTES } from '@/shared/config';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/shared/ui/card';
 
 export function RegisterPage() {
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>Регистрация</CardTitle>
-        <CardDescription>Создайте аккаунт — вход выполнится автоматически.</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="w-full max-w-md">
+      <p className="eyebrow text-muted-foreground">Первый шаг</p>
+      <h1 className="display-title mt-3 text-4xl sm:text-5xl">
+        Новый <span className="display-mark">аккаунт</span>
+      </h1>
+      <p className="mt-4 text-sm text-muted-foreground">Вход выполнится автоматически.</p>
+
+      <div className="shadow-soft mt-8 rounded-3xl bg-card p-7">
         <RegisterForm />
-      </CardContent>
-      <CardFooter className="justify-center text-sm text-muted-foreground">
-        Уже есть аккаунт?&nbsp;
-        <Link href={ROUTES.login} className="font-medium text-foreground hover:underline">
+      </div>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Уже есть аккаунт?{' '}
+        <Link href={ROUTES.login} className="font-semibold text-foreground hover:underline">
           Войти
         </Link>
-      </CardFooter>
-    </Card>
+      </p>
+    </div>
   );
 }

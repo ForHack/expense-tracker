@@ -1,10 +1,9 @@
+import { PagePlaceholder } from '@/widgets/page-placeholder';
+
 export default function TransactionsPage() {
   return (
-    <section>
-      <h1 className="text-2xl font-semibold">Транзакции</h1>
-      <p className="mt-2 text-sm opacity-70">
-        Список операций с фильтрами по счёту, категории и периоду.
-      </p>
-    </section>
+    <PagePlaceholder eyebrow="История операций" title="Все" highlight="транзакции">
+      Список операций с фильтрами по счёту, категории и периоду.
+    </PagePlaceholder>
   );
 }

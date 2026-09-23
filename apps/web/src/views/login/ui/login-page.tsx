@@ -1,14 +1,6 @@
 import Link from 'next/link';
 import { LoginForm } from '@/features/auth';
 import { ROUTES } from '@/shared/config';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/shared/ui/card';
 
 /**
  * `from` ставит middleware, когда перехватывает заход на защищённую страницу без сессии.
@@ -26,20 +18,22 @@ export async function LoginPage({
   const redirectTo = isSafePath ? from : ROUTES.dashboard;
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>Вход</CardTitle>
-        <CardDescription>Войдите, чтобы продолжить учёт расходов.</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="w-full max-w-md">
+      <p className="eyebrow text-muted-foreground">Рады видеть снова</p>
+      <h1 className="display-title mt-3 text-4xl sm:text-5xl">
+        Вход в <span className="display-mark">учёт</span>
+      </h1>
+
+      <div className="shadow-soft mt-8 rounded-3xl bg-card p-7">
         <LoginForm redirectTo={redirectTo} />
-      </CardContent>
-      <CardFooter className="justify-center text-sm text-muted-foreground">
-        Нет аккаунта?&nbsp;
-        <Link href={ROUTES.register} className="font-medium text-foreground hover:underline">
+      </div>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Нет аккаунта?{' '}
+        <Link href={ROUTES.register} className="font-semibold text-foreground hover:underline">
           Зарегистрироваться
         </Link>
-      </CardFooter>
-    </Card>
+      </p>
+    </div>
   );
 }

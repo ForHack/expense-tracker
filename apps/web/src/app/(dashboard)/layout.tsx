@@ -15,9 +15,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   }
 
   return (
-    <div className="flex min-h-screen">
-      <AppSidebar user={user} />
-      <main className="flex-1 p-8">{children}</main>
+    <div className="min-h-screen p-3 sm:p-5">
+      <div className="mx-auto flex max-w-[1560px] gap-4 sm:gap-5">
+        <AppSidebar user={user} />
+        <main className="min-w-0 flex-1 pb-6">{children}</main>
+      </div>
     </div>
   );
 }

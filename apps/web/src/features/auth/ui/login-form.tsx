@@ -72,7 +72,7 @@ export function LoginForm({ redirectTo = ROUTES.dashboard }: { redirectTo?: stri
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" size="lg" className="mt-2 w-full" disabled={isSubmitting}>
           {isSubmitting && <Loader2Icon className="animate-spin" />}
           Войти
         </Button>

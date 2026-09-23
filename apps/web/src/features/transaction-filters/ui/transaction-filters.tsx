@@ -53,7 +53,7 @@ export function TransactionFilters({ categories, type, categoryId }: Transaction
         value={type ?? ALL_FILTER_VALUE}
         onValueChange={(value) => applyFilters({ type: value })}
       >
-        <SelectTrigger className="w-44" aria-label="Тип транзакции">
+        <SelectTrigger className="w-44 rounded-full" aria-label="Тип транзакции">
           <SelectValue placeholder="Тип" />
         </SelectTrigger>
         <SelectContent>
@@ -70,7 +70,7 @@ export function TransactionFilters({ categories, type, categoryId }: Transaction
         value={categoryId ?? ALL_FILTER_VALUE}
         onValueChange={(value) => applyFilters({ categoryId: value })}
       >
-        <SelectTrigger className="w-56" aria-label="Категория">
+        <SelectTrigger className="w-56 rounded-full" aria-label="Категория">
           <SelectValue placeholder="Категория" />
         </SelectTrigger>
         <SelectContent>

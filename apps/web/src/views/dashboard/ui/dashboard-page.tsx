@@ -75,20 +75,33 @@ export async function DashboardPage({
   }
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Обзор</h1>
-        <CreateTransactionDialog accounts={accounts} categories={categories} />
-      </header>
+    <div className="space-y-5">
+      <header className="flex flex-wrap items-start justify-between gap-6">
+        <div>
+          <p className="eyebrow text-muted-foreground">
+            Привет, {user.name ?? user.email.split('@')[0]}
+          </p>
+          <h1 className="display-title mt-3 text-4xl sm:text-5xl">
+            Деньги под
+            <br />
+            <span className="display-mark">контролем!</span>
+          </h1>
+        </div>
 
-      <UserCard user={user} />
+        <div className="flex flex-wrap items-center gap-3">
+          <UserCard user={user} />
+          <CreateTransactionDialog accounts={accounts} categories={categories} />
+        </div>
+      </header>
 
       <MonthSummary summary={summary} currency={user.currency} />
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-medium">Транзакции</h2>
+      <section className="shadow-soft space-y-5 rounded-3xl bg-card p-6 sm:p-7">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h2 className="display-title text-2xl">Транзакции</h2>
 
-        <TransactionFilters categories={categories} type={type} categoryId={categoryId} />
+          <TransactionFilters categories={categories} type={type} categoryId={categoryId} />
+        </div>
 
         <TransactionsList transactions={transactions.data} currency={user.currency} />
 

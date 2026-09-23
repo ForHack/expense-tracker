@@ -88,7 +88,7 @@ export function CreateTransactionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button disabled={!hasAccounts}>
+        <Button variant="accent" disabled={!hasAccounts}>
           <PlusIcon />
           Новая транзакция
         </Button>
@@ -103,7 +103,7 @@ export function CreateTransactionDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-1" noValidate>
             <FormError message={formError} />
 
             <FormField
@@ -145,7 +145,12 @@ export function CreateTransactionDialog({
                 <FormItem>
                   <FormLabel>Сумма</FormLabel>
                   <FormControl>
-                    <Input inputMode="decimal" placeholder="0.00" {...field} />
+                    <Input
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      className="h-14 font-display text-2xl font-bold"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -235,7 +240,7 @@ export function CreateTransactionDialog({
             />
 
             <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" variant="accent" disabled={isSubmitting}>
                 {isSubmitting && <Loader2Icon className="animate-spin" />}
                 Сохранить
               </Button>
