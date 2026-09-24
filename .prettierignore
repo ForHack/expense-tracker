@@ -1,0 +1,15 @@
+# Сборка и кеши
+node_modules
+.next
+dist
+coverage
+.turbo
+
+# Генерируется pnpm и Prisma — форматировать нельзя
+pnpm-lock.yaml
+apps/api/prisma/migrations
+
+# Среда
+.env
+.env.*
+!.env.example
