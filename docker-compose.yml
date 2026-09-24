@@ -17,6 +17,19 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  dbhub:
+    image: bytebase/dbhub:latest
+    ports:
+      - "8080:8080"
+    command:
+      - --transport
+      - http
+      - --port
+      - "8080"
+      - --dsn
+      - "postgres://postgres:postgres@postgres:5432/expense_tracker?sslmode=disable"
+    depends_on:
+      - postgres
 
 volumes:
   pgdata:
